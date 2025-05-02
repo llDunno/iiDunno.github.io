@@ -5,56 +5,473 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TORMAX Door Configurator</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        select, input { width: 100%; padding: 8px; box-sizing: border-box; }
-        button { padding: 10px 15px; background: #e32321; color: white; border: none; cursor: pointer; }
-        .result { margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px; }
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            padding: 20px;
+            color: #333;
+        }
+        .header {
+            background-color: #e32321;
+            color: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h1 {
+            margin: 0;
+        }
+        .configurator-container {
+            display: flex;
+            gap: 30px;
+        }
+        .config-form {
+            flex: 3;
+        }
+        .config-summary {
+            flex: 2;
+            background: #f8f8f8;
+            padding: 20px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            position: sticky;
+            top: 20px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .form-section {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        .form-section h2 {
+            margin-top: 0;
+            color: #e32321;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .dimension-group {
+            display: flex;
+            gap: 15px;
+        }
+        .dimension-group .form-group {
+            flex: 1;
+        }
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+        .checkbox-item input {
+            width: auto;
+            margin-right: 8px;
+        }
+        .actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+        }
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .btn-primary {
+            background-color: #e32321;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #c71c1a;
+        }
+        .btn-secondary {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background-color: #eee;
+        }
+        .price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e32321;
+            margin: 15px 0;
+        }
+        .summary-item {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .summary-item .label {
+            font-weight: bold;
+        }
+        .summary-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .options-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .options-list li {
+            padding: 5px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .options-list .option-price {
+            font-weight: bold;
+        }
+        #webhook-result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            border-radius: 4px;
+            display: none;
+        }
+        .error {
+            background: #ffebee;
+            border: 1px solid #ef9a9a;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .success {
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        /* Test mode indicator */
+        .test-mode {
+            background-color: #f0f0f0;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #e32321;
+        }
     </style>
 </head>
 <body>
-    <h1>TORMAX Door Configurator</h1>
-    
-    <div id="odoo-data" class="form-group">
-        <h3>Odoo Data (URL Parameters)</h3>
-        <div id="params-display">Loading...</div>
+    <div class="header">
+        <h1>TORMAX Door Configurator</h1>
     </div>
-    
-    <div class="form-group">
-        <label for="door-series">Door Series</label>
-        <select id="door-series">
-            <option value="tx9200">TX9200 - Fixed Sidelite Slider</option>
-            <option value="tx9300">TX9300 - Full Breakout Slider</option>
-            <option value="tx9400">TX9400 - Telescoping Slider</option>
-            <option value="tx9500">TX9500 - All Glass Slider</option>
-        </select>
+
+    <div id="test-mode" class="test-mode" style="display:none;">
+        <strong>Test Mode:</strong> Configuration data will be sent to a simulated Odoo webhook.
     </div>
-    
-    <div class="form-group">
-        <label for="configuration">Configuration Type</label>
-        <select id="configuration">
-            <option value="single-slide">Single Slide (O-SX or P-SX)</option>
-            <option value="bi-parting">Bi-Parting (O-SX-SX-O)</option>
-            <option value="single-breakout">Single Full Breakout (SO-SX)</option>
-            <option value="bi-part-breakout">Bi-Part Full Breakout (SO-SX-SX-SO)</option>
-        </select>
+
+    <div class="configurator-container">
+        <div class="config-form">
+            <div id="odoo-data" class="form-section">
+                <h2>Order Information</h2>
+                <div id="params-display">Loading...</div>
+            </div>
+            
+            <div class="form-section">
+                <h2>Basic Configuration</h2>
+                <div class="form-group">
+                    <label for="door-series">Door Series</label>
+                    <select id="door-series">
+                        <option value="9200">TX9200 - Fixed Sidelite Slider</option>
+                        <option value="9300">TX9300 - Full Breakout Slider</option>
+                        <option value="9400">TX9400 - Telescoping Slider</option>
+                        <option value="9500">TX9500 - All Glass Slider</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="configuration">Configuration Type</label>
+                    <select id="configuration">
+                        <option value="single-slide">Single Slide (O-SX or P-SX)</option>
+                        <option value="bi-parting">Bi-Parting (O-SX-SX-O)</option>
+                        <option value="single-breakout">Single Full Breakout (SO-SX)</option>
+                        <option value="bi-part-breakout">Bi-Part Full Breakout (SO-SX-SX-SO)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="finish">Finish</label>
+                    <select id="finish">
+                        <option value="clear">Clear Anodized</option>
+                        <option value="dark-bronze">Dark Bronze Anodized</option>
+                        <option value="black">Black Anodized</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2>Dimensions</h2>
+                <div class="dimension-group">
+                    <div class="form-group">
+                        <label for="package-width">Package Width (inches)</label>
+                        <input type="number" id="package-width" value="120" min="72" max="168">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="package-height">Package Height (inches)</label>
+                        <input type="number" id="package-height" value="96" min="84" max="120">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="transom-height">Transom Height (inches, if applicable)</label>
+                    <input type="number" id="transom-height" value="0" min="0">
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2>Panel Options</h2>
+                <div class="form-group">
+                    <label for="bottom-rail">Bottom Rail</label>
+                    <select id="bottom-rail">
+                        <option value="4-inch">4" (Standard)</option>
+                        <option value="10-inch">10"</option>
+                        <option value="14-inch">14" (Seamed)</option>
+                        <option value="20-inch">20" (Seamed)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="muntin-bar">Horizontal Muntin Bar</label>
+                    <select id="muntin-bar">
+                        <option value="none">No Muntins</option>
+                        <option value="1-3-4">1-3/4" Muntin</option>
+                        <option value="4-1-2">4-1/2" Muntin</option>
+                        <option value="10-inch">10" Muntin</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="panel-style">Panel Style</label>
+                    <select id="panel-style">
+                        <option value="narrow">Narrow Stile Panels (Standard)</option>
+                        <option value="medium">Medium Stile Panels</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2>Drive System</h2>
+                <div class="form-group">
+                    <label for="drive-system">Drive System</label>
+                    <select id="drive-system">
+                        <option value="standard">iMotion® 2301 Standard Duty Drive System (Standard)</option>
+                        <option value="heavy-duty">iMotion® 2401 Heavy Duty Drive System</option>
+                        <option value="ip65">iMotion® 2301.IP65 System</option>
+                        <option value="heavy-duty-ip65">iMotion® 2401.IP65 HD System</option>
+                        <option value="manual">Manual Operation (Delete Drive)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2>Optional Accessories</h2>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="acc-battery">
+                        <label for="acc-battery">Battery Back-up</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="acc-lock">
+                        <label for="acc-lock">Electric Lock</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="acc-key-switch">
+                        <label for="acc-key-switch">Function Control Panel Key-Switch</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="acc-ball-detent">
+                        <label for="acc-ball-detent">SO Panel Bottom-Ball Detent</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="acc-dps">
+                        <label for="acc-dps">Door Position Switch (DPS)</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="acc-io-module">
+                        <label for="acc-io-module">I/O Module</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="acc-threshold">
+                        <label for="acc-threshold">Continuous Threshold</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="error" id="error-message"></div>
+            <div class="success" id="success-message"></div>
+            
+            <div class="actions">
+                <button id="calculate-btn" class="btn-secondary">Calculate Price</button>
+                <button id="submit-btn" class="btn-primary">Submit Configuration</button>
+            </div>
+            
+            <div id="webhook-result"></div>
+        </div>
+        
+        <div class="config-summary">
+            <h2>Configuration Summary</h2>
+            
+            <div class="summary-section">
+                <div class="summary-item">
+                    <span class="label">Door Series:</span>
+                    <span id="summary-door-series">TX9200</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Configuration:</span>
+                    <span id="summary-configuration">Single Slide</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Finish:</span>
+                    <span id="summary-finish">Clear</span>
+                </div>
+            </div>
+            
+            <div class="summary-section">
+                <div class="summary-item">
+                    <span class="label">Package Width:</span>
+                    <span id="summary-width">120"</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Package Height:</span>
+                    <span id="summary-height">96"</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Transom Height:</span>
+                    <span id="summary-transom">0"</span>
+                </div>
+            </div>
+            
+            <div class="summary-section">
+                <h3>Selected Options</h3>
+                <ul class="options-list" id="options-list">
+                    <!-- Options will be populated by JavaScript -->
+                </ul>
+            </div>
+            
+            <div class="price-section">
+                <div class="summary-item">
+                    <span class="label">Base Price:</span>
+                    <span id="summary-base-price">$9,678.00</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Options:</span>
+                    <span id="summary-options-price">$0.00</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Total Price:</span>
+                    <span id="summary-total-price" class="price">$9,678.00</span>
+                </div>
+            </div>
+            
+            <div class="actions" style="margin-top: 20px;">
+                <button id="return-to-odoo" class="btn-secondary">Return to Odoo</button>
+            </div>
+        </div>
     </div>
-    
-    <div class="form-group">
-        <label for="finish">Finish</label>
-        <select id="finish">
-            <option value="clear">Clear</option>
-            <option value="dark-bronze">Dark Bronze</option>
-            <option value="black">Black</option>
-        </select>
-    </div>
-    
-    <button id="submit-btn">Submit Configuration</button>
-    
-    <div class="result" id="result" style="display: none;"></div>
     
     <script>
+        // Base prices from TORMAX price list
+        const basePrices = {
+            "9200": {
+                "single-slide": 9678,
+                "single-slide-transom": 10401,
+                "bi-parting": 12596,
+                "bi-parting-transom": 13653
+            },
+            "9300": {
+                "single-breakout": 9839,
+                "single-breakout-transom": 10565,
+                "bi-part-breakout": 12911,
+                "bi-part-breakout-transom": 13965
+            },
+            "9400": {
+                "single-slide": 11000,
+                "single-slide-transom": 12000,
+                "bi-parting": 14000,
+                "bi-parting-transom": 15000
+            },
+            "9500": {
+                "single-slide": 12500,
+                "single-slide-transom": 13500,
+                "bi-parting": 16000,
+                "bi-parting-transom": 17000
+            }
+        };
+        
+        // Option prices
+        const optionPrices = {
+            "bottom-rail": {
+                "4-inch": 0,
+                "10-inch": 299,
+                "14-inch": 350,
+                "20-inch": 400
+            },
+            "muntin-bar": {
+                "none": 0,
+                "1-3-4": 215,
+                "4-1-2": 274,
+                "10-inch": 480
+            },
+            "panel-style": {
+                "narrow": 0,
+                "medium": 185
+            },
+            "drive-system": {
+                "standard": 0,
+                "heavy-duty": 1200,
+                "ip65": 1800,
+                "heavy-duty-ip65": 2200,
+                "manual": -3686
+            },
+            "accessories": {
+                "acc-battery": 1630,
+                "acc-lock": 838,
+                "acc-key-switch": 404,
+                "acc-ball-detent": 194,
+                "acc-dps": 278,
+                "acc-io-module": 1078,
+                "acc-threshold": 295
+            }
+        };
+        
+        // Transom threshold (in inches)
+        const TRANSOM_THRESHOLD = 12;
+        
+        // URL for the mock Odoo webhook (for testing)
+        // In production, this would be your actual Odoo webhook URL
+        const MOCK_WEBHOOK_URL = "https://webhook.site/your-uuid-here";
+        
         // Parse URL parameters (data from Odoo)
         function getUrlParams() {
             const params = {};
@@ -62,20 +479,356 @@
             const urlParams = new URLSearchParams(queryString);
             
             for (const [key, value] of urlParams.entries()) {
-                params[key] = value;
+                params[key] = decodeURIComponent(value);
             }
             
             return params;
         }
         
-        // Display the parameters
+        // Format currency
+        function formatCurrency(amount) {
+            return '$' + amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Show success message
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success-message');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Calculate price based on configuration
+        function calculatePrice() {
+            const doorSeries = document.getElementById('door-series').value;
+            const configuration = document.getElementById('configuration').value;
+            const transomHeight = parseInt(document.getElementById('transom-height').value) || 0;
+            
+            // Determine if we have a transom
+            const hasTransom = transomHeight >= TRANSOM_THRESHOLD;
+            
+            // Get the appropriate base price
+            let basePrice = 0;
+            let configKey = configuration;
+            
+            if (hasTransom) {
+                configKey += '-transom';
+            }
+            
+            // Map configurations to base price keys
+            if (doorSeries === '9200') {
+                if (configuration === 'single-breakout' || configuration === 'bi-part-breakout') {
+                    // TX9200 doesn't support breakout configurations
+                    basePrice = 0;
+                    showError("TX9200 doesn't support breakout configurations");
+                } else {
+                    basePrice = basePrices[doorSeries][configKey] || 0;
+                }
+            } else if (doorSeries === '9300') {
+                if (configuration === 'single-slide' || configuration === 'bi-parting') {
+                    // TX9300 doesn't support non-breakout configurations
+                    basePrice = 0;
+                    showError("TX9300 is a breakout system, please select a breakout configuration");
+                } else {
+                    basePrice = basePrices[doorSeries][configKey] || 0;
+                }
+            } else {
+                basePrice = basePrices[doorSeries][configKey] || 0;
+            }
+            
+            // Calculate options
+            let optionsTotal = 0;
+            
+            // Bottom rail
+            const bottomRail = document.getElementById('bottom-rail').value;
+            optionsTotal += optionPrices["bottom-rail"][bottomRail] || 0;
+            
+            // Muntin bar
+            const muntinBar = document.getElementById('muntin-bar').value;
+            optionsTotal += optionPrices["muntin-bar"][muntinBar] || 0;
+            
+            // Panel style
+            const panelStyle = document.getElementById('panel-style').value;
+            optionsTotal += optionPrices["panel-style"][panelStyle] || 0;
+            
+            // Drive system
+            const driveSystem = document.getElementById('drive-system').value;
+            optionsTotal += optionPrices["drive-system"][driveSystem] || 0;
+            
+            // Accessories
+            for (const accessory in optionPrices.accessories) {
+                if (document.getElementById(accessory).checked) {
+                    optionsTotal += optionPrices.accessories[accessory];
+                }
+            }
+            
+            // Update the summary
+            document.getElementById('summary-base-price').textContent = formatCurrency(basePrice);
+            document.getElementById('summary-options-price').textContent = formatCurrency(optionsTotal);
+            document.getElementById('summary-total-price').textContent = formatCurrency(basePrice + optionsTotal);
+            
+            return {
+                basePrice: basePrice,
+                optionsPrice: optionsTotal,
+                totalPrice: basePrice + optionsTotal
+            };
+        }
+        
+        // Update summary
+        function updateSummary() {
+            // Get current values
+            const doorSeries = document.getElementById('door-series').value;
+            const configuration = document.getElementById('configuration').value;
+            const finish = document.getElementById('finish').value;
+            const width = document.getElementById('package-width').value;
+            const height = document.getElementById('package-height').value;
+            const transom = document.getElementById('transom-height').value;
+            
+            // Map values to display names
+            const doorSeriesNames = {
+                '9200': 'TX9200 - Fixed Sidelite',
+                '9300': 'TX9300 - Full Breakout',
+                '9400': 'TX9400 - Telescoping',
+                '9500': 'TX9500 - All Glass'
+            };
+            
+            const configNames = {
+                'single-slide': 'Single Slide (O-SX or P-SX)',
+                'bi-parting': 'Bi-Parting (O-SX-SX-O)',
+                'single-breakout': 'Single Full Breakout (SO-SX)',
+                'bi-part-breakout': 'Bi-Part Full Breakout (SO-SX-SX-SO)'
+            };
+            
+            const finishNames = {
+                'clear': 'Clear Anodized',
+                'dark-bronze': 'Dark Bronze Anodized',
+                'black': 'Black Anodized'
+            };
+            
+            // Update summary fields
+            document.getElementById('summary-door-series').textContent = doorSeriesNames[doorSeries] || doorSeries;
+            document.getElementById('summary-configuration').textContent = configNames[configuration] || configuration;
+            document.getElementById('summary-finish').textContent = finishNames[finish] || finish;
+            document.getElementById('summary-width').textContent = width + '"';
+            document.getElementById('summary-height').textContent = height + '"';
+            document.getElementById('summary-transom').textContent = transom + '"';
+            
+            // Update options list
+            const optionsList = document.getElementById('options-list');
+            optionsList.innerHTML = '';
+            
+            // Add bottom rail
+            const bottomRail = document.getElementById('bottom-rail').value;
+            const bottomRailPrice = optionPrices["bottom-rail"][bottomRail] || 0;
+            if (bottomRailPrice > 0) {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${bottomRail.replace('-inch', '"')} Bottom Rail</span> <span class="option-price">${formatCurrency(bottomRailPrice)}</span>`;
+                optionsList.appendChild(li);
+            }
+            
+            // Add muntin bar
+            const muntinBar = document.getElementById('muntin-bar').value;
+            const muntinBarPrice = optionPrices["muntin-bar"][muntinBar] || 0;
+            if (muntinBarPrice > 0) {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${muntinBar.replace('-', ' ').replace('1-3-4', '1-3/4"').replace('4-1-2', '4-1/2"').replace('inch', '"')} Muntin Bar</span> <span class="option-price">${formatCurrency(muntinBarPrice)}</span>`;
+                optionsList.appendChild(li);
+            }
+            
+            // Add panel style
+            const panelStyle = document.getElementById('panel-style').value;
+            const panelStylePrice = optionPrices["panel-style"][panelStyle] || 0;
+            if (panelStylePrice > 0) {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${panelStyle.charAt(0).toUpperCase() + panelStyle.slice(1)} Stile Panels</span> <span class="option-price">${formatCurrency(panelStylePrice)}</span>`;
+                optionsList.appendChild(li);
+            }
+            
+            // Add drive system
+            const driveSystem = document.getElementById('drive-system').value;
+            const driveSystemPrice = optionPrices["drive-system"][driveSystem] || 0;
+            if (driveSystemPrice !== 0) {
+                const li = document.createElement('li');
+                const driveSystemNames = {
+                    'standard': 'iMotion® 2301 Standard Duty',
+                    'heavy-duty': 'iMotion® 2401 Heavy Duty',
+                    'ip65': 'iMotion® 2301.IP65',
+                    'heavy-duty-ip65': 'iMotion® 2401.IP65 HD',
+                    'manual': 'Manual Operation (No Drive)'
+                };
+                li.innerHTML = `<span>${driveSystemNames[driveSystem] || driveSystem}</span> <span class="option-price">${formatCurrency(driveSystemPrice)}</span>`;
+                optionsList.appendChild(li);
+            }
+            
+            // Add accessories
+            for (const accessory in optionPrices.accessories) {
+                if (document.getElementById(accessory).checked) {
+                    const li = document.createElement('li');
+                    const accessoryNames = {
+                        'acc-battery': 'Battery Back-up',
+                        'acc-lock': 'Electric Lock',
+                        'acc-key-switch': 'Function Control Panel Key-Switch',
+                        'acc-ball-detent': 'SO Panel Bottom-Ball Detent',
+                        'acc-dps': 'Door Position Switch (DPS)',
+                        'acc-io-module': 'I/O Module',
+                        'acc-threshold': 'Continuous Threshold'
+                    };
+                    li.innerHTML = `<span>${accessoryNames[accessory] || accessory}</span> <span class="option-price">${formatCurrency(optionPrices.accessories[accessory])}</span>`;
+                    optionsList.appendChild(li);
+                }
+            }
+            
+            // Calculate price
+            calculatePrice();
+        }
+        
+        // Get configuration data
+        function getConfigurationData() {
+            // Get values from form
+            const doorSeries = document.getElementById('door-series').value;
+            const configuration = document.getElementById('configuration').value;
+            const finish = document.getElementById('finish').value;
+            const packageWidth = document.getElementById('package-width').value;
+            const packageHeight = document.getElementById('package-height').value;
+            const transomHeight = document.getElementById('transom-height').value;
+            const bottomRail = document.getElementById('bottom-rail').value;
+            const muntinBar = document.getElementById('muntin-bar').value;
+            const panelStyle = document.getElementById('panel-style').value;
+            const driveSystem = document.getElementById('drive-system').value;
+            
+            // Get accessories
+            const accessories = {};
+            for (const accessory in optionPrices.accessories) {
+                accessories[accessory] = document.getElementById(accessory).checked;
+            }
+            
+            // Calculate price
+            const pricing = calculatePrice();
+            
+            // Create configuration object
+            return {
+                doorSeries: doorSeries,
+                configuration: configuration,
+                finish: finish,
+                dimensions: {
+                    packageWidth: packageWidth,
+                    packageHeight: packageHeight,
+                    transomHeight: transomHeight
+                },
+                panelOptions: {
+                    bottomRail: bottomRail,
+                    muntinBar: muntinBar,
+                    panelStyle: panelStyle
+                },
+                driveSystem: driveSystem,
+                accessories: accessories,
+                pricing: pricing
+            };
+        }
+        
+        // Send configuration to Odoo (simulated)
+        async function sendConfigurationToOdoo(configData, odooData) {
+            try {
+                // For testing purposes, we'll use a mock webhook service
+                // In production, this would point to your Odoo server
+                const response = await fetch(MOCK_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        odoo_data: odooData,
+                        configuration: configData,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                
+                // Since we're not actually connecting to Odoo in this test,
+                // we'll simulate a successful response
+                return {
+                    success: true,
+                    message: "Configuration saved successfully",
+                    configuration_id: "CONF-" + Math.floor(Math.random() * 10000)
+                };
+            } catch (error) {
+                console.error('Error sending configuration:', error);
+                return {
+                    success: false,
+                    message: "Error sending configuration to Odoo: " + error.message
+                };
+            }
+        }
+        
+        // Modify product in Odoo (simulated)
+        async function simulateOdooProductUpdate(configData, odooData) {
+            // In a real implementation, this would make a call to the Odoo API
+            // to update the product with the configuration data
+            
+            // For this test, we'll simulate a successful response
+            const webhookResult = document.getElementById('webhook-result');
+            webhookResult.innerHTML = `
+                <h3>Configuration Sent Successfully</h3>
+                <p>Configuration ID: CONF-${Math.floor(Math.random() * 10000)}</p>
+                <p>The following data would be sent to update the product in Odoo:</p>
+                <pre>${JSON.stringify({
+                    sale_order_id: odooData.sale_id,
+                    order_line_id: odooData.line_id,
+                    product_id: odooData.product,
+                    configuration: configData
+                }, null, 2)}</pre>
+                <p><strong>Simulated Odoo Response:</strong> Product updated successfully!</p>
+            `;
+            webhookResult.style.display = 'block';
+            
+            return {
+                success: true,
+                message: "Product updated in Odoo",
+                redirect_url: odooData.callback
+            };
+        }
+        
+        // Display the parameters from Odoo
         const params = getUrlParams();
         const paramsDisplay = document.getElementById('params-display');
         
+        // Show test mode indicator if needed
+        if (window.location.hostname === 'localhost' || 
+            window.location.hostname.includes('github.io')) {
+            document.getElementById('test-mode').style.display = 'block';
+        }
+        
         if (Object.keys(params).length > 0) {
-            let paramsHtml = '<ul>';
+            let paramsHtml = '<ul style="list-style-type: none; padding-left: 0;">';
+            
+            const paramLabels = {
+                'sale_id': 'Sale Order ID',
+                'company': 'Company',
+                'salesperson': 'Salesperson',
+                'product': 'Product ID',
+                'line_id': 'Order Line ID',
+                'callback': 'Callback URL'
+            };
+            
             for (const [key, value] of Object.entries(params)) {
-                paramsHtml += `<li><strong>${key}:</strong> ${value}</li>`;
+                if (key !== 'callback') { // Don't display callback URL in the UI
+                    paramsHtml += `<li><strong>${paramLabels[key] || key}:</strong> ${value}</li>`;
+                }
             }
             paramsHtml += '</ul>';
             paramsDisplay.innerHTML = paramsHtml;
@@ -83,40 +836,95 @@
             paramsDisplay.innerHTML = 'No parameters found. <a href="?sale_id=123&company=Test+Company&salesperson=John+Doe&product=45">Add test parameters</a>';
         }
         
-        // Handle form submission
-        document.getElementById('submit-btn').addEventListener('click', function() {
-            // Get form values
-            const doorSeries = document.getElementById('door-series').value;
-            const configuration = document.getElementById('configuration').value;
-            const finish = document.getElementById('finish').value;
+        // Set up event listeners
+        document.getElementById('door-series').addEventListener('change', updateSummary);
+        document.getElementById('configuration').addEventListener('change', updateSummary);
+        document.getElementById('finish').addEventListener('change', updateSummary);
+        document.getElementById('package-width').addEventListener('change', updateSummary);
+        document.getElementById('package-height').addEventListener('change', updateSummary);
+        document.getElementById('transom-height').addEventListener('change', updateSummary);
+        document.getElementById('bottom-rail').addEventListener('change', updateSummary);
+        document.getElementById('muntin-bar').addEventListener('change', updateSummary);
+        document.getElementById('panel-style').addEventListener('change', updateSummary);
+        document.getElementById('drive-system').addEventListener('change', updateSummary);
+        
+        // Add listeners for all checkboxes
+        for (const accessory in optionPrices.accessories) {
+            document.getElementById(accessory).addEventListener('change', updateSummary);
+        }
+        
+        // Calculate price button
+        document.getElementById('calculate-btn').addEventListener('click', function() {
+            updateSummary();
+        });
+        
+        // Return to Odoo button
+        document.getElementById('return-to-odoo').addEventListener('click', function() {
+            if (params.callback) {
+                window.location.href = params.callback;
+            } else {
+                showError('No callback URL provided by Odoo');
+            }
+        });
+        
+        // Submit configuration button
+        document.getElementById('submit-btn').addEventListener('click', async function() {
+            // Get configuration data
+            const configData = getConfigurationData();
             
-            // Create configuration object
-            const configData = {
-                doorSeries: doorSeries,
-                configuration: configuration,
-                finish: finish,
-                // Include original Odoo parameters
+            // Add Odoo data
+            const odooData = {
                 sale_id: params.sale_id || '',
                 line_id: params.line_id || '',
+                product_id: params.product || '',
                 company: params.company || '',
                 salesperson: params.salesperson || '',
-                configured_at: new Date().toISOString()
+                timestamp: new Date().toISOString()
             };
             
-            // Display the result (for now, just show what would be sent)
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = `
-                <h3>Configuration Summary</h3>
-                <p>This configuration would be sent to Odoo:</p>
-                <pre>${JSON.stringify(configData, null, 2)}</pre>
-                ${params.callback ? `<p><a href="${params.callback}">Return to Odoo</a></p>` : ''}
-            `;
-            resultDiv.style.display = 'block';
-            
-            // In a real implementation, you would send this data to your webhook
-            // For now, we're just displaying it
-            console.log('Configuration data:', configData);
+            try {
+                // Disable the button while processing
+                const submitBtn = document.getElementById('submit-btn');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Sending...';
+                
+                // First we would send the configuration to Odoo
+                // For this test, we'll simulate the response
+                const result = await simulateOdooProductUpdate(configData, odooData);
+                
+                if (result.success) {
+                    showSuccess(result.message);
+                    
+                    // Add a button to return to Odoo with the updated configuration
+                    const webhookResult = document.getElementById('webhook-result');
+                    if (params.callback) {
+                        webhookResult.innerHTML += `
+                            <p>
+                                <button id="complete-config-btn" class="btn-primary" style="margin-top: 10px;">
+                                    Complete Configuration and Return to Odoo
+                                </button>
+                            </p>
+                        `;
+                        
+                        // Add event listener for the complete button
+                        document.getElementById('complete-config-btn').addEventListener('click', function() {
+                            // In a real implementation, this URL would include parameters
+                            // to update the product in Odoo
+                            window.location.href = params.callback;
+                        });
+                    }
+                } else {
+                    showError(result.message);
+                }
+            } catch (error) {
+                showError('Error submitting configuration: ' + error.message);
+            } finally {
+                // Re-enable the button
+                const submitBtn = document.getElementById('submit-btn');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Configuration';
+            }
         });
-    </script>
-</body>
-</html>
+        
+        // Initialize summary on load
+        updateSummary();
