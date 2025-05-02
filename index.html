@@ -825,8 +825,11 @@
                 'callback': 'Callback URL'
             };
             
+            // Product name
+            paramsHtml += `<li><strong>Product:</strong> VB SLIDER</li>`;
+            
             for (const [key, value] of Object.entries(params)) {
-                if (key !== 'callback') { // Don't display callback URL in the UI
+                if (key !== 'callback' && key !== 'product') { // Don't display callback URL and handle product separately
                     paramsHtml += `<li><strong>${paramLabels[key] || key}:</strong> ${value}</li>`;
                 }
             }
