@@ -1,8 +1,9 @@
-html
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>TORMAX Door Configurator Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TORMAX Door Configurator</title>
     <style>
         body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
         .form-group { margin-bottom: 15px; }
@@ -13,10 +14,10 @@ html
     </style>
 </head>
 <body>
-    <h1>TORMAX Door Configurator Test</h1>
+    <h1>TORMAX Door Configurator</h1>
     
     <div id="odoo-data" class="form-group">
-        <h3>Odoo Data (Simulated URL Parameters)</h3>
+        <h3>Odoo Data (URL Parameters)</h3>
         <div id="params-display">Loading...</div>
     </div>
     
@@ -54,7 +55,7 @@ html
     <div class="result" id="result" style="display: none;"></div>
     
     <script>
-        // Parse URL parameters (simulating data from Odoo)
+        // Parse URL parameters (data from Odoo)
         function getUrlParams() {
             const params = {};
             const queryString = window.location.search;
@@ -89,44 +90,32 @@ html
             const configuration = document.getElementById('configuration').value;
             const finish = document.getElementById('finish').value;
             
-            // Combine with the URL parameters
+            // Create configuration object
             const configData = {
-                ...params,  // Include the original params from Odoo
                 doorSeries: doorSeries,
                 configuration: configuration,
                 finish: finish,
-                timestamp: new Date().toISOString()
+                // Include original Odoo parameters
+                sale_id: params.sale_id || '',
+                line_id: params.line_id || '',
+                company: params.company || '',
+                salesperson: params.salesperson || '',
+                configured_at: new Date().toISOString()
             };
             
-            // Send to our webhook
-            fetch('https://your-webhook-url/receive-config', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(configData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Show the result
-                const resultDiv = document.getElementById('result');
-                resultDiv.innerHTML = `
-                    <h3>Configuration Sent Successfully!</h3>
-                    <p>Configuration ID: ${data.config_id}</p>
-                    <p>Message: ${data.message}</p>
-                    <pre>${JSON.stringify(configData, null, 2)}</pre>
-                `;
-                resultDiv.style.display = 'block';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                const resultDiv = document.getElementById('result');
-                resultDiv.innerHTML = `
-                    <h3>Error Sending Configuration</h3>
-                    <p>${error.message || 'Unknown error occurred'}</p>
-                `;
-                resultDiv.style.display = 'block';
-            });
+            // Display the result (for now, just show what would be sent)
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <h3>Configuration Summary</h3>
+                <p>This configuration would be sent to Odoo:</p>
+                <pre>${JSON.stringify(configData, null, 2)}</pre>
+                ${params.callback ? `<p><a href="${params.callback}">Return to Odoo</a></p>` : ''}
+            `;
+            resultDiv.style.display = 'block';
+            
+            // In a real implementation, you would send this data to your webhook
+            // For now, we're just displaying it
+            console.log('Configuration data:', configData);
         });
     </script>
 </body>
